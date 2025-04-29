@@ -12,6 +12,7 @@ func ConsumeImages(fetchChannel <-chan model.Image, resizeChannel chan model.Ima
 		case img, ok := <-fetchChannel:
 			if !ok {
 				log.WarnLogger.Printf("all images has been fetched")
+				return
 			} else {
 				if img.Resize != "" {
 					resizeChannel <- img
@@ -32,6 +33,7 @@ func ConsumeResize(resizeChannel <-chan model.Image, filterChannel chan model.Im
 		case img, ok := <-resizeChannel:
 			if !ok {
 				log.WarnLogger.Printf("all images has been resized")
+				return
 			} else {
 				Resize(img)
 				if img.Filter != "" {
@@ -50,8 +52,8 @@ func ConsumeFilter(filterChannel <-chan model.Image, saveChannel chan model.Imag
 		select {
 		case img, ok := <-filterChannel:
 			if !ok {
-				close(saveChannel)
 				log.WarnLogger.Printf("all images has been filtered")
+				return
 			} else {
 				Filter(img)
 				saveChannel <- img
@@ -66,10 +68,10 @@ func ConsumeSave(saveChannel <-chan model.Image) {
 		case img, ok := <-saveChannel:
 			if !ok {
 				log.WarnLogger.Printf("all images has been saved")
+				return
 			} else {
 				Save(img)
 			}
-			return
 		}
 	}
 }
