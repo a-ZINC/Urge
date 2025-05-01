@@ -1,11 +1,12 @@
 package utils
 
 import (
+	"image"
 	"urge/log"
 	"urge/model"
 )
 
-func ConsumeImages(fetchChannel <-chan model.Image, resizeChannel chan model.Image, filterChannel chan model.Image, saveChannel chan model.Image) {
+func ConsumeImages(fetchChannel <-chan model.Image, resizeChannel chan model.Image, filterChannel chan model.Image, saveChannel chan image.Image) {
 	defer close(resizeChannel)
 	for {
 		select {
@@ -19,14 +20,14 @@ func ConsumeImages(fetchChannel <-chan model.Image, resizeChannel chan model.Ima
 				} else if img.Filter != "" {
 					filterChannel <- img
 				} else {
-					saveChannel <- img
+					saveChannel <- img.Image
 				}
 			}
 		}
 	}
 }
 
-func ConsumeResize(resizeChannel <-chan model.Image, filterChannel chan model.Image, saveChannel chan model.Image) {
+func ConsumeResize(resizeChannel <-chan model.Image, filterChannel chan model.Image, saveChannel chan image.Image) {
 	defer close(filterChannel)
 	for {
 		select {
@@ -39,14 +40,14 @@ func ConsumeResize(resizeChannel <-chan model.Image, filterChannel chan model.Im
 				if img.Filter != "" {
 					filterChannel <- img
 				} else {
-					saveChannel <- img
+					saveChannel <- img.Image
 				}
 			}
 		}
 	}
 }
 
-func ConsumeFilter(filterChannel <-chan model.Image, saveChannel chan model.Image) {
+func ConsumeFilter(filterChannel <-chan model.Image, saveChannel chan image.Image) {
 	defer close(saveChannel)
 	for {
 		select {
@@ -55,14 +56,14 @@ func ConsumeFilter(filterChannel <-chan model.Image, saveChannel chan model.Imag
 				log.WarnLogger.Printf("all images has been filtered")
 				return
 			} else {
-				Filter(img)
-				saveChannel <- img
+				filter := Filter(img)
+				saveChannel <- filter.GetOutputImage()
 			}
 		}
 	}
 }
 
-func ConsumeSave(saveChannel <-chan model.Image) {
+func ConsumeSave(saveChannel <-chan image.Image) {
 	for {
 		select {
 		case img, ok := <-saveChannel:

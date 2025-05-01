@@ -6,7 +6,7 @@ import (
 	"urge/model"
 )
 
-func Filter(img model.Image) {
+func Filter(img model.Image) filter.Filter {
 	log.InfoLogger.Printf("----------Filtering image------------")
 	var filterType filter.Filter
 	switch img.Filter {
@@ -16,4 +16,5 @@ func Filter(img model.Image) {
 	if filterType != nil {
 		filterType.Filter()
 	}
+	return filterType
 }
