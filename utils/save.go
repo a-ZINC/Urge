@@ -4,12 +4,18 @@ import (
 	"image"
 	"image/jpeg"
 	"os"
+	"strings"
 	"time"
+	"urge/cmd"
 	"urge/log"
 )
 
 func Save(img image.Image) {
-	fileLocation := "./new.jpeg"
+	directory := strings.Split(cmd.Flags.Input, "/")
+	directory = directory[:len(directory)-1]
+	directoryString := strings.Join(directory, "/")
+	fileLocation := directoryString + "/new.jpeg"
+
 	log.InfoLogger.Printf("----------Saving image------------")
 	time.Sleep(2 * time.Second)
 	newImageFile, err := os.Create(fileLocation)
