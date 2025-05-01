@@ -1,16 +1,23 @@
 # This workflow will build a golang project
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
-
 name: Go
 
 on:
   push:
     branches: [ "master" ]
 
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deploy environment'
+        required: false
+        default: 'staging'
+
 jobs:
 
-  build:
+  docker_build_and_push:
     runs-on: ubuntu-latest
+    environment: dev
     steps:
     - uses: actions/checkout@v4
 
@@ -27,6 +34,12 @@ jobs:
 
     - name: Docker Image Build
       run: docker build -t azinc2828/urge:$GITHUB_SHA .
+
+    - name: Login to Docker hub
+      uses: docker/login-action@v2
+      with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
     - name: DockerHub image push
       run: docker push azinc2828/urge:$GITHUB_SHA
