@@ -6,6 +6,13 @@ on:
   push:
     branches: [ "master" ]
 
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deploy environment'
+        required: false
+        default: 'staging'
+
 jobs:
 
   build:
