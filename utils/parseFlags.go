@@ -26,12 +26,11 @@ func InputParser() ([]model.Image, error) {
 		if in := MultipleInputParser(input); len(in) > 0 {
 			return in, nil
 		} else {
-			return nil, fmt.Errorf("problem ocurred to intialize images")
+			return nil, fmt.Errorf("problem ocurred to parse inputs")
 		}
 	}
 
 	if cmd.Flags.File != "" {
-
 
 	}
 	return nil, fmt.Errorf("error in parsing input")
@@ -44,48 +43,71 @@ func MultipleInputParser(input []string) []model.Image {
 	if err != nil {
 		log.WarnLogger.Printf("error in getting current directory: %s", err)
 	}
-	directoryPath := filepath.Join(curr_directory, "transform_"+ filepath.Base(curr_directory))
+	directoryPath := filepath.Join(curr_directory, "transform_"+filepath.Base(curr_directory))
 	err = os.MkdirAll(directoryPath, 0755)
 	if err != nil {
 		log.WarnLogger.Printf("error in creating directory: %s", err)
 	}
 	for _, url := range input {
 		url = strings.Trim(url, " ")
-
-		info, err := os.Stat(url)
-		if err != nil {
-			log.WarnLogger.Printf("error in getting file info: %s", err)
-			continue
-		}
-
-		if info.IsDir() {
-			entries, err := os.ReadDir(url)
+		if strings.HasPrefix(url, "http") || strings.HasPrefix(url, "https") {
+			images, err = linkParser(images, url, directoryPath)
 			if err != nil {
-				log.WarnLogger.Printf("error in reading directory: %s", err)
-				continue
+				log.WarnLogger.Printf("error in parsing link: %s", err)
 			}
-			var imageUrls []string
-			for _, entry := range entries {
-				fmt.Println("entry", entry.Name())
-				if entry.IsDir() {
-					images = append(images, MultipleInputParser([]string{filepath.Join(url, entry.Name())})...)
-				}
-				image := filepath.Ext(entry.Name())
-				if image == ".jpeg" || image == ".jpg" || image == ".png" || image == ".gif" {
-					imageUrls = append(imageUrls, filepath.Join(url, entry.Name()))
-				}
-			}
-			images = append(images, MultipleInputParser(imageUrls)...)
 		} else {
-			image := model.Image{
-				Image:     nil,
-				Url:       url,
-				Resize:    cmd.Flags.Resize,
-				Filter:    cmd.Flags.Filter,
-				OutputUrl: directoryPath,
+			images, err = fileParser(images, url, directoryPath)
+			if err != nil {
+				log.WarnLogger.Printf("error in parsing file: %s", err)
 			}
-			images = append(images, image)
 		}
 	}
 	return images
+}
+
+func fileParser(images []model.Image, url string, directoryPath string) ([]model.Image, error) {
+	info, err := os.Stat(url)
+	if err != nil {
+		return nil, err
+	}
+
+	if info.IsDir() {
+		entries, err := os.ReadDir(url)
+		if err != nil {
+			return nil, err
+		}
+		var imageUrls []string
+		for _, entry := range entries {
+			fmt.Println("entry", entry.Name())
+			if entry.IsDir() {
+				images = append(images, MultipleInputParser([]string{filepath.Join(url, entry.Name())})...)
+			}
+			image := filepath.Ext(entry.Name())
+			if image == ".jpeg" || image == ".jpg" || image == ".png" || image == ".gif" {
+				imageUrls = append(imageUrls, filepath.Join(url, entry.Name()))
+			}
+		}
+		images = append(images, MultipleInputParser(imageUrls)...)
+	} else {
+		image := model.Image{
+			Image:     nil,
+			Url:       url,
+			Resize:    cmd.Flags.Resize,
+			Filter:    cmd.Flags.Filter,
+			OutputUrl: directoryPath,
+		}
+		images = append(images, image)
+	}
+	return images, nil
+}
+
+func linkParser(images []model.Image, url string, directoryPath string) ([]model.Image, error) {
+	image := model.Image{
+		Image:     nil,
+		Url:       url,
+		Resize:    cmd.Flags.Resize,
+		Filter:    cmd.Flags.Filter,
+		OutputUrl: directoryPath,
+	}
+	return append(images, image), nil
 }
