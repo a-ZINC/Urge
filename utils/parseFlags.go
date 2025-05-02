@@ -41,25 +41,52 @@ func MultipleInputParser(input []string) []model.Image {
 	var images []model.Image
 	for _, url := range input {
 		url = strings.Trim(url, " ")
+
+		info, err := os.Stat(url)
+		if err != nil {
+			log.WarnLogger.Printf("error in getting file info: %s", err)
+			continue
+		}
+
 		directory, _ := filepath.Split(url)
-		directory, err := filepath.Abs(directory)
+		directory, err = filepath.Abs(directory)
 		if err != nil {
 			log.WarnLogger.Printf("error in getting absolute path: %s", err)
 		}
-		directoryPath := filepath.Join(directory, "transform")
-		err = os.MkdirAll(directoryPath, 0755)
-		if err != nil {
-			log.WarnLogger.Printf("error in creating directory: %s", err)
-			continue
+		if info.IsDir() {
+			entries, err := os.ReadDir(url)
+			if err != nil {
+				log.WarnLogger.Printf("error in reading directory: %s", err)
+				continue
+			}
+			var imageUrls []string
+			for _, entry := range entries {
+				fmt.Println("entry", entry.Name())
+				if entry.IsDir() {
+					return MultipleInputParser([]string{filepath.Join(url, entry.Name())})
+				}
+				image := filepath.Ext(entry.Name())
+				if image == ".jpeg" || image == ".jpg" || image == ".png" || image == ".gif" {
+					imageUrls = append(imageUrls, filepath.Join(url, entry.Name()))
+				}
+			}
+			return MultipleInputParser(imageUrls)
+		} else {
+			directoryPath := filepath.Join(directory, "transform_"+ filepath.Base(directory))
+			err = os.MkdirAll(directoryPath, 0755)
+			if err != nil {
+				log.WarnLogger.Printf("error in creating directory: %s", err)
+				continue
+			}
+			image := model.Image{
+				Image:     nil,
+				Url:       url,
+				Resize:    cmd.Flags.Resize,
+				Filter:    cmd.Flags.Filter,
+				OutputUrl: directoryPath,
+			}
+			images = append(images, image)
 		}
-		image := model.Image{
-			Image:  nil,
-			Url:    url,
-			Resize: cmd.Flags.Resize,
-			Filter: cmd.Flags.Filter,
-			OutputUrl: directoryPath,
-		}
-		images = append(images, image)
 	}
 	return images
 }
