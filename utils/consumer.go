@@ -1,17 +1,20 @@
 package utils
 
 import (
+	"urge/log"
 	"urge/model"
 )
 
-func ConsumeImages(fetchChannel <-chan model.Image, resizeChannel chan model.Image, filterChannel chan model.Image, saveChannel chan model.Image) {
+func ConsumeImages(fetchChannel <-chan model.Image, rotateChannel chan model.Image, resizeChannel chan model.Image, filterChannel chan model.Image, saveChannel chan model.Image) {
 	for {
 		select {
 		case img, ok := <-fetchChannel:
 			if !ok {
 				return
 			} else {
-				if img.Resize != "" {
+				if img.Rotate != 0 {
+					rotateChannel <- img
+				} else if img.Resize != "" {
 					resizeChannel <- img
 				} else if img.Filter != "" {
 					filterChannel <- img
@@ -19,6 +22,23 @@ func ConsumeImages(fetchChannel <-chan model.Image, resizeChannel chan model.Ima
 					saveChannel <- img
 				}
 			}
+		}
+	}
+}
+
+func ConsumeRotate(rotateChannel <-chan model.Image, resizeChannel chan model.Image, filterChannel chan model.Image, saveChannel chan model.Image) {
+	for img := range rotateChannel {
+		rotateImage, err := Rotate(img)
+		if err != nil {
+			log.WarnLogger.Printf("error in rotating image: %s", err)
+			continue
+		}
+		if img.Resize != "" {
+			resizeChannel <- rotateImage
+		} else if img.Filter != "" {
+			filterChannel <- rotateImage
+		} else {
+			saveChannel <- rotateImage
 		}
 	}
 }
@@ -48,7 +68,11 @@ func ConsumeFilter(filterChannel <-chan model.Image, saveChannel chan model.Imag
 			if !ok {
 				return
 			} else {
-				filter := Filter(img)
+				filter, err := Filter(img)
+				if err != nil {
+					log.WarnLogger.Printf("error in filtering image: %s", err)
+					continue
+				}
 				saveChannel <- filter.GetImage()
 			}
 		}

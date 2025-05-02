@@ -94,6 +94,7 @@ func fileParser(images []model.Image, url string, directoryPath string) ([]model
 			Url:       url,
 			Resize:    cmd.Flags.Resize,
 			Filter:    cmd.Flags.Filter,
+			Rotate:    cmd.Flags.Rotate,
 			OutputUrl: directoryPath,
 		}
 		images = append(images, image)
@@ -107,6 +108,7 @@ func linkParser(images []model.Image, url string, directoryPath string) ([]model
 		Url:       url,
 		Resize:    cmd.Flags.Resize,
 		Filter:    cmd.Flags.Filter,
+		Rotate:    cmd.Flags.Rotate,
 		OutputUrl: directoryPath,
 	}
 	return append(images, image), nil
