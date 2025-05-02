@@ -32,6 +32,7 @@ func InputParser() ([]model.Image, error) {
 
 	if cmd.Flags.File != "" {
 
+
 	}
 	return nil, fmt.Errorf("error in parsing input")
 
@@ -39,6 +40,15 @@ func InputParser() ([]model.Image, error) {
 
 func MultipleInputParser(input []string) []model.Image {
 	var images []model.Image
+	curr_directory, err := os.Getwd()
+	if err != nil {
+		log.WarnLogger.Printf("error in getting current directory: %s", err)
+	}
+	directoryPath := filepath.Join(curr_directory, "transform_"+ filepath.Base(curr_directory))
+	err = os.MkdirAll(directoryPath, 0755)
+	if err != nil {
+		log.WarnLogger.Printf("error in creating directory: %s", err)
+	}
 	for _, url := range input {
 		url = strings.Trim(url, " ")
 
@@ -48,11 +58,6 @@ func MultipleInputParser(input []string) []model.Image {
 			continue
 		}
 
-		directory, _ := filepath.Split(url)
-		directory, err = filepath.Abs(directory)
-		if err != nil {
-			log.WarnLogger.Printf("error in getting absolute path: %s", err)
-		}
 		if info.IsDir() {
 			entries, err := os.ReadDir(url)
 			if err != nil {
@@ -63,21 +68,15 @@ func MultipleInputParser(input []string) []model.Image {
 			for _, entry := range entries {
 				fmt.Println("entry", entry.Name())
 				if entry.IsDir() {
-					return MultipleInputParser([]string{filepath.Join(url, entry.Name())})
+					images = append(images, MultipleInputParser([]string{filepath.Join(url, entry.Name())})...)
 				}
 				image := filepath.Ext(entry.Name())
 				if image == ".jpeg" || image == ".jpg" || image == ".png" || image == ".gif" {
 					imageUrls = append(imageUrls, filepath.Join(url, entry.Name()))
 				}
 			}
-			return MultipleInputParser(imageUrls)
+			images = append(images, MultipleInputParser(imageUrls)...)
 		} else {
-			directoryPath := filepath.Join(directory, "transform_"+ filepath.Base(directory))
-			err = os.MkdirAll(directoryPath, 0755)
-			if err != nil {
-				log.WarnLogger.Printf("error in creating directory: %s", err)
-				continue
-			}
 			image := model.Image{
 				Image:     nil,
 				Url:       url,
