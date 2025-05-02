@@ -7,6 +7,7 @@ type Image struct {
 	Resize string
 	Filter string
 	Url string
-	Output string
+	OutputUrl string
 	Format string
+	Output image.Image
 }

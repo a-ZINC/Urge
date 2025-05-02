@@ -1,8 +1,8 @@
 package filter
 
-import "image"
+import "urge/model"
 
 type Filter interface {
 	Filter()
-	GetOutputImage() image.Image
+	GetImage() model.Image
 }

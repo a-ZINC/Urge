@@ -1,20 +1,19 @@
 package utils
 
 import (
-	"image"
 	"image/jpeg"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
-	"urge/cmd"
 	"urge/log"
+	"urge/model"
 )
 
-func Save(img image.Image) {
-	directory := strings.Split(cmd.Flags.Input, "/")
-	directory = directory[:len(directory)-1]
-	directoryString := strings.Join(directory, "/")
-	fileLocation := directoryString + "/new.jpeg"
+func Save(img model.Image) {
+	_, file := filepath.Split(img.Url)
+	file = strings.TrimSuffix(file, filepath.Ext(file))
+	fileLocation := filepath.Join(img.OutputUrl, "transformed_" + file + ".jpeg")
 
 	log.InfoLogger.Printf("----------Saving image------------")
 	time.Sleep(2 * time.Second)
@@ -24,7 +23,7 @@ func Save(img image.Image) {
 		return
 	}
 	defer newImageFile.Close()
-	err = jpeg.Encode(newImageFile, img, nil)
+	err = jpeg.Encode(newImageFile, img.Output, nil)
 	if err != nil {
 		log.WarnLogger.Printf("error in encoding file: %s", err)
 		return

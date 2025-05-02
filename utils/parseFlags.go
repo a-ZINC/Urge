@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"urge/cmd"
 	"urge/log"
@@ -21,6 +22,7 @@ func InputParser() ([]model.Image, error) {
 	var input []string
 	if cmd.Flags.Input != "" {
 		input = strings.Split(strings.Trim(cmd.Flags.Input, " "), ",")
+		fmt.Println("input", input)
 		if in := MultipleInputParser(input); len(in) > 0 {
 			return in, nil
 		} else {
@@ -38,12 +40,24 @@ func InputParser() ([]model.Image, error) {
 func MultipleInputParser(input []string) []model.Image {
 	var images []model.Image
 	for _, url := range input {
+		url = strings.Trim(url, " ")
+		directory, _ := filepath.Split(url)
+		directory, err := filepath.Abs(directory)
+		if err != nil {
+			log.WarnLogger.Printf("error in getting absolute path: %s", err)
+		}
+		directoryPath := filepath.Join(directory, "transform")
+		err = os.MkdirAll(directoryPath, 0755)
+		if err != nil {
+			log.WarnLogger.Printf("error in creating directory: %s", err)
+			continue
+		}
 		image := model.Image{
 			Image:  nil,
 			Url:    url,
 			Resize: cmd.Flags.Resize,
 			Filter: cmd.Flags.Filter,
-			Output: "",
+			OutputUrl: directoryPath,
 		}
 		images = append(images, image)
 	}

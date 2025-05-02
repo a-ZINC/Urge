@@ -1,7 +1,6 @@
 package main
 
 import (
-	"image"
 	"sync"
 	"urge/cmd"
 	"urge/log"
@@ -20,7 +19,7 @@ func main() {
 	fetchChannel := make(chan model.Image)
 	resizeChannel := make(chan model.Image)
 	filterChannel := make(chan model.Image)
-	saveChannel := make(chan image.Image)
+	saveChannel := make(chan model.Image)
 
 	var mainWg sync.WaitGroup
 	var processWg sync.WaitGroup

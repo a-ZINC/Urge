@@ -11,7 +11,7 @@ func Filter(img model.Image) filter.Filter {
 	var filterType filter.Filter
 	switch img.Filter {
 	case "grayscale":
-		filterType = filter.New(img.Image)
+		filterType = filter.New(img)
 	}
 	if filterType != nil {
 		filterType.Filter()
