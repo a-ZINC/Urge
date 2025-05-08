@@ -18,6 +18,7 @@ func main() {
 	}
 	fetchChannel := make(chan model.Image)
 	resizeChannel := make(chan model.Image)
+	flipChannel := make(chan model.Image)
 	filterChannel := make(chan model.Image)
 	rotateChannel := make(chan model.Image)
 	saveChannel := make(chan model.Image)
@@ -27,6 +28,7 @@ func main() {
 	var resizeWg sync.WaitGroup
 	var filterWg sync.WaitGroup
 	var rotateWg sync.WaitGroup
+	var flipWg sync.WaitGroup
 
 	go utils.ProduceImages(fetchChannel, images)
 	for range numberOfWorkers {
@@ -35,7 +37,16 @@ func main() {
 		go func() {
 			defer mainWg.Done()
 			defer processWg.Done()
-			utils.ConsumeImages(fetchChannel, rotateChannel, resizeChannel, filterChannel, saveChannel)
+			utils.ConsumeImages(fetchChannel, flipChannel, rotateChannel, resizeChannel, filterChannel, saveChannel)
+		}()
+	}
+	for range numberOfWorkers {
+		mainWg.Add(1)
+		flipWg.Add(1)
+		go func() {
+			defer mainWg.Done()
+			defer flipWg.Done()
+			utils.ConsumeFlip(flipChannel, rotateChannel, resizeChannel, filterChannel, saveChannel)
 		}()
 	}
 	for range numberOfWorkers {
@@ -74,9 +85,13 @@ func main() {
 	}
 	go func() {
 		processWg.Wait()
+		close(flipChannel)
+	}()
+	go func() {
+		flipWg.Wait()
 		close(rotateChannel)
 	}()
-	go func() { 
+	go func() {
 		rotateWg.Wait()
 		close(resizeChannel)
 	}()

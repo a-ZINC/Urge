@@ -16,8 +16,6 @@ func Filter(img model.Image) (filter.Filter, error) {
 	default:
 		return filterType, fmt.Errorf("we only support grayscale filter")
 	}
-	if filterType != nil {
-		filterType.Filter()
-	}
+	filterType.Filter()
 	return filterType, nil
 }

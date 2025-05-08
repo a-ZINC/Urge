@@ -94,6 +94,7 @@ func fileParser(images []model.Image, url string, directoryPath string) ([]model
 			Url:       url,
 			Resize:    cmd.Flags.Resize,
 			Filter:    cmd.Flags.Filter,
+			Flip:      cmd.Flags.Flip,
 			Rotate:    cmd.Flags.Rotate,
 			OutputUrl: directoryPath,
 		}
@@ -108,6 +109,7 @@ func linkParser(images []model.Image, url string, directoryPath string) ([]model
 		Url:       url,
 		Resize:    cmd.Flags.Resize,
 		Filter:    cmd.Flags.Filter,
+		Flip:      cmd.Flags.Flip,
 		Rotate:    cmd.Flags.Rotate,
 		OutputUrl: directoryPath,
 	}

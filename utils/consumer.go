@@ -5,14 +5,16 @@ import (
 	"urge/model"
 )
 
-func ConsumeImages(fetchChannel <-chan model.Image, rotateChannel chan model.Image, resizeChannel chan model.Image, filterChannel chan model.Image, saveChannel chan model.Image) {
+func ConsumeImages(fetchChannel <-chan model.Image, flipChannel chan model.Image, rotateChannel chan model.Image, resizeChannel chan model.Image, filterChannel chan model.Image, saveChannel chan model.Image) {
 	for {
 		select {
 		case img, ok := <-fetchChannel:
 			if !ok {
 				return
 			} else {
-				if img.Rotate != 0 {
+				if img.Flip != "" {
+					flipChannel <- img
+				} else if img.Rotate != 0 {
 					rotateChannel <- img
 				} else if img.Resize != "" {
 					resizeChannel <- img
@@ -22,6 +24,25 @@ func ConsumeImages(fetchChannel <-chan model.Image, rotateChannel chan model.Ima
 					saveChannel <- img
 				}
 			}
+		}
+	}
+}
+
+func ConsumeFlip(flipChannel <-chan model.Image, rotateChannel chan model.Image, resizeChannel chan model.Image, filterChannel chan model.Image, saveChannel chan model.Image) {
+	for img := range flipChannel {
+		flippedImage, err := Flip(img)
+		if err != nil {
+			log.WarnLogger.Printf("error in flipping image: %s", err)
+			continue
+		}
+		if img.Rotate != 0 {
+			rotateChannel <- *flippedImage
+		} else if img.Resize != "" {
+			resizeChannel <- *flippedImage
+		} else if img.Filter != "" {
+			filterChannel <- *flippedImage
+		} else {
+			saveChannel <- *flippedImage
 		}
 	}
 }

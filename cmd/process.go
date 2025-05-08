@@ -7,6 +7,7 @@ type flags struct {
 	Output string
 	Resize string
 	Filter string
+	Flip string
 	Rotate int
 	File string
 	TakeFlagFromFile bool
@@ -25,6 +26,7 @@ func init() {
 	processCmd.PersistentFlags().StringVarP(&Flags.Resize, "resize", "r", "", "resize image according to given dimension")
 	processCmd.PersistentFlags().StringVarP(&Flags.Filter, "filter", "f", "", "filter image according to given filter")
 	processCmd.PersistentFlags().StringVarP(&Flags.File, "file", "x", "", "file url where all image url is stored")
+	processCmd.PersistentFlags().StringVarP(&Flags.Flip, "flip", "s", "", "flip image according to given direction")
 	processCmd.PersistentFlags().IntVarP(&Flags.Rotate, "rotate", "t", 0, "rotate image according to given degree")
 	processCmd.PersistentFlags().BoolVarP(&Flags.TakeFlagFromFile, "main", "y", false, "cosnider that File has all each image url and its corresponding flags so neglect user inputed flags")
 	processCmd.MarkFlagRequired("input")
